@@ -4,19 +4,65 @@
 #include <BLEClient.h>
 #include <BLEScan.h>
 
-// Adresse MAC du Muse 2 (à remplacer par la tienne)
+// Adresse MAC du Muse 2 (remplace par la tienne)
 static BLEAddress museAddress("00:55:DA:B5:00:F2");
 
-// UUIDs (à adapter selon les besoins)
-static const char* GENERIC_ACCESS_UUID = "1800"; // Generic Access Service UUID
-static const char* GENERIC_ATTRIBUTE_UUID = "1801"; // Generic Attribute Service UUID
-static const char* UNKNOWN_SERVICE_UUID = "FE8D"; // Unknown Service UUID
-static const char* TARGET_CHARACTERISTIC_UUID = "00002a00-0000-1000-8000-00805f9b34fb"; // UUID de la caractéristique à lire
+// UUIDs des services et caractéristiques
+static const char* GENERIC_ACCESS_UUID = "1800"; // Service Generic Access
+static const char* TARGET_CHARACTERISTIC_UUID = "00002a00-0000-1000-8000-00805f9b34fb"; // Nom du Muse
+static const char* UNKNOWN_SERVICE_UUID = "0000fe8d-0000-1000-8000-00805f9b34fb";  // Service EEG
+static const char* EEG_CHARACTERISTIC_UUID = "273e0003-4c4d-454d-96be-f03bac821358";  // Caractéristique EEG
 
 BLEClient* pClient = nullptr;
+BLERemoteCharacteristic* eegCharacteristic = nullptr;
 bool connected = false;
 
-// Fonction de connexion
+// Callback de réception des données EEG
+static void eegCallback(BLERemoteCharacteristic* pCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
+    Serial.print("Données EEG reçues : ");
+    for (size_t i = 0; i < length; i++) {
+        Serial.print(pData[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
+}
+
+// Fonction pour lire une caractéristique
+void readCharacteristicData(BLERemoteCharacteristic* pRemoteCharacteristic) {
+    if (pRemoteCharacteristic->canRead()) {
+        std::string value = std::string(pRemoteCharacteristic->readValue().c_str());
+        Serial.print("Valeur lue : ");
+        Serial.println(value.c_str());
+    } else {
+        Serial.println("Lecture non autorisée pour cette caractéristique.");
+    }
+}
+
+// Fonction pour s'abonner aux notifications EEG
+bool subscribeToEEGNotifications() {
+    BLERemoteService* pService = pClient->getService(UNKNOWN_SERVICE_UUID);
+    if (!pService) {
+        Serial.println("Service EEG non trouvé !");
+        return false;
+    }
+
+    eegCharacteristic = pService->getCharacteristic(EEG_CHARACTERISTIC_UUID);
+    if (!eegCharacteristic) {
+        Serial.println("Caractéristique EEG non trouvée !");
+        return false;
+    }
+
+    if (eegCharacteristic->canNotify()) {
+        eegCharacteristic->registerForNotify(eegCallback);
+        Serial.println("Notifications EEG activées !");
+        return true;
+    } else {
+        Serial.println("Les notifications ne sont pas supportées.");
+        return false;
+    }
+}
+
+// Connexion au Muse
 bool connectToMuse() {
     Serial.println("Connexion au Muse 2...");
 
@@ -27,67 +73,33 @@ bool connectToMuse() {
     }
 
     Serial.println("Connecté !");
-    
-    // Recherche des services
-    BLERemoteService* pRemoteService = nullptr;
 
     // Recherche du service Generic Access
-    pRemoteService = pClient->getService(GENERIC_ACCESS_UUID);
-    if (pRemoteService) {
+    BLERemoteService* pAccessService = pClient->getService(GENERIC_ACCESS_UUID);
+    if (pAccessService) {
         Serial.println("Service Generic Access trouvé !");
-        listCharacteristics(pRemoteService);
+        
+        // Recherche de la caractéristique du nom du Muse
+        BLERemoteCharacteristic* pNameChar = pAccessService->getCharacteristic(TARGET_CHARACTERISTIC_UUID);
+        if (pNameChar) {
+            Serial.println("==> Lecture du nom du Muse...");
+            readCharacteristicData(pNameChar);
+        } else {
+            Serial.println("Caractéristique du nom non trouvée.");
+        }
     } else {
         Serial.println("Service Generic Access non trouvé.");
     }
 
-    // Recherche du service Generic Attribute
-    pRemoteService = pClient->getService(GENERIC_ATTRIBUTE_UUID);
-    if (pRemoteService) {
-        Serial.println("Service Generic Attribute trouvé !");
-        listCharacteristics(pRemoteService);
+    // Activer les notifications EEG
+    if (subscribeToEEGNotifications()) {
+        Serial.println("Prêt à recevoir les données EEG !");
     } else {
-        Serial.println("Service Generic Attribute non trouvé.");
-    }
-
-    // Recherche du service Inconnu
-    pRemoteService = pClient->getService(UNKNOWN_SERVICE_UUID);
-    if (pRemoteService) {
-        Serial.println("Unknown Service trouvé !");
-        listCharacteristics(pRemoteService);
-    } else {
-        Serial.println("Unknown Service non trouvé.");
+        Serial.println("Impossible d'activer les notifications.");
     }
 
     connected = true;
     return true;
-}
-
-// Fonction pour lire les données d'une caractéristique spécifique
-void readCharacteristicData(BLERemoteCharacteristic* pRemoteCharacteristic) {
-    if (pRemoteCharacteristic->canRead()) {  // Vérifie si la lecture est autorisée
-        std::string value = std::string(pRemoteCharacteristic->readValue().c_str());
-        Serial.print("Valeur lue : ");
-        Serial.println(value.c_str());  // Affiche la valeur en tant que chaîne de caractères
-    } else {
-        Serial.println("Lecture non autorisée pour cette caractéristique.");
-    }
-}
-
-// Fonction pour lister les caractéristiques d'un service
-void listCharacteristics(BLERemoteService* pRemoteService) {
-    std::map<std::string, BLERemoteCharacteristic*>* characteristics = pRemoteService->getCharacteristics();
-    
-    for (auto& pair : *characteristics) {
-        BLERemoteCharacteristic* pRemoteCharacteristic = pair.second;
-        Serial.print("Caractéristique UUID : ");
-        Serial.println(pRemoteCharacteristic->getUUID().toString().c_str());
-
-        // Vérifie si c'est l'UUID cible et lit les données
-        if (pRemoteCharacteristic->getUUID().toString() == TARGET_CHARACTERISTIC_UUID) {
-            Serial.println("==> Caractéristique cible détectée, lecture des données...");
-            readCharacteristicData(pRemoteCharacteristic);
-        }
-    }
 }
 
 void setup() {
@@ -106,6 +118,11 @@ void setup() {
 void loop() {
     delay(1000);
     if (!connected) {
-        Serial.println("Connexion perdue !");
+        Serial.println("Connexion perdue ! Tentative de reconnexion...");
+        if (connectToMuse()) {
+            Serial.println("Reconnecté !");
+        } else {
+            Serial.println("Échec de reconnexion.");
+        }
     }
 }
