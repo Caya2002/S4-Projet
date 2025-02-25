@@ -14,7 +14,6 @@ static const char* UNKNOWN_SERVICE_UUID = "0000fe8d-0000-1000-8000-00805f9b34fb"
 static const char* EEG_CHARACTERISTIC_UUID = "273e0003-4c4d-454d-96be-f03bac821358";  // Caractéristique EEG
 
 BLEClient* pClient = nullptr;
-BLERemoteCharacteristic* eegCharacteristic = nullptr;
 bool connected = false;
 
 // Callback de réception des données EEG
@@ -35,30 +34,6 @@ void readCharacteristicData(BLERemoteCharacteristic* pRemoteCharacteristic) {
         Serial.println(value.c_str());
     } else {
         Serial.println("Lecture non autorisée pour cette caractéristique.");
-    }
-}
-
-// Fonction pour s'abonner aux notifications EEG
-bool subscribeToEEGNotifications() {
-    BLERemoteService* pService = pClient->getService(UNKNOWN_SERVICE_UUID);
-    if (!pService) {
-        Serial.println("Service EEG non trouvé !");
-        return false;
-    }
-
-    eegCharacteristic = pService->getCharacteristic(EEG_CHARACTERISTIC_UUID);
-    if (!eegCharacteristic) {
-        Serial.println("Caractéristique EEG non trouvée !");
-        return false;
-    }
-
-    if (eegCharacteristic->canNotify()) {
-        eegCharacteristic->registerForNotify(eegCallback);
-        Serial.println("Notifications EEG activées !");
-        return true;
-    } else {
-        Serial.println("Les notifications ne sont pas supportées.");
-        return false;
     }
 }
 
@@ -91,11 +66,37 @@ bool connectToMuse() {
         Serial.println("Service Generic Access non trouvé.");
     }
 
-    // Activer les notifications EEG
-    if (subscribeToEEGNotifications()) {
-        Serial.println("Prêt à recevoir les données EEG !");
+    // Recherche du service EEG
+    BLERemoteService* pEEGService = pClient->getService(UNKNOWN_SERVICE_UUID);
+    if (pEEGService) {
+        Serial.println("Service EEG trouvé !");
+        
+        // Recherche de la caractéristique EEG
+        BLERemoteCharacteristic* pEEGChar = pEEGService->getCharacteristic(EEG_CHARACTERISTIC_UUID);
+        if (pEEGChar) {
+            Serial.println("Caractéristique EEG trouvée !");
+            
+            if (pEEGChar->canNotify()) {
+                Serial.println("Abonnement aux notifications EEG...");
+                pEEGChar->registerForNotify(eegCallback);
+                
+                // Activer manuellement les notifications via le descripteur CCCD
+                BLERemoteDescriptor* pDescriptor = pEEGChar->getDescriptor(BLEUUID((uint16_t)0x2902));
+                if (pDescriptor) {
+                    uint8_t notificationOn[] = {0x01, 0x00}; // Activer les notifications
+                    pDescriptor->writeValue(notificationOn, 2, true);
+                    Serial.println("Notifications activées !");
+                } else {
+                    Serial.println("Descripteur CCCD non trouvé !");
+                }
+            } else {
+                Serial.println("Cette caractéristique ne supporte pas les notifications.");
+            }
+        } else {
+            Serial.println("Caractéristique EEG non trouvée.");
+        }
     } else {
-        Serial.println("Impossible d'activer les notifications.");
+        Serial.println("Service EEG non trouvé.");
     }
 
     connected = true;
@@ -118,11 +119,6 @@ void setup() {
 void loop() {
     delay(1000);
     if (!connected) {
-        Serial.println("Connexion perdue ! Tentative de reconnexion...");
-        if (connectToMuse()) {
-            Serial.println("Reconnecté !");
-        } else {
-            Serial.println("Échec de reconnexion.");
-        }
+        Serial.println("Connexion perdue !");
     }
 }
