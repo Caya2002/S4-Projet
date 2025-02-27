@@ -11,14 +11,16 @@ static BLEAddress museAddress("00:55:DA:B5:00:F2");
 static const char* GENERIC_ACCESS_UUID = "1800"; // Service Generic Access
 static const char* TARGET_CHARACTERISTIC_UUID = "00002a00-0000-1000-8000-00805f9b34fb"; // Nom du Muse
 static const char* UNKNOWN_SERVICE_UUID = "0000fe8d-0000-1000-8000-00805f9b34fb";  // Service EEG
-static const char* EEG_CHARACTERISTIC_UUID = "273e0003-4c4d-454d-96be-f03bac821358";  // Caractéristique EEG
+static const char* EEG_CHARACTERISTIC_UUID = "273e0001-4c4d-454d-96be-f03bac821358";  // Caractéristique EEG
 
 BLEClient* pClient = nullptr;
 bool connected = false;
 
 // Callback de réception des données EEG
 static void eegCallback(BLERemoteCharacteristic* pCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
-    Serial.print("Données EEG reçues : ");
+    Serial.print("Notification reçue de : ");
+    Serial.println(pCharacteristic->getUUID().toString().c_str());
+    Serial.print("Données EEG : ");
     for (size_t i = 0; i < length; i++) {
         Serial.print(pData[i], HEX);
         Serial.print(" ");
@@ -105,6 +107,7 @@ bool connectToMuse() {
 
 void setup() {
     Serial.begin(115200);
+    Serial.println("\n\n\n");
     Serial.println("Démarrage ESP32-S3 BLE Client...");
 
     BLEDevice::init("");
