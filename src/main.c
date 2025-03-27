@@ -259,7 +259,7 @@ void MAIN_Tasks ( void )
             /* Application's initial state. */
         case INIT:
             baseline_power = 0;
-            LCD_WriteStringAtPos("INITIALISATION  ", 0, 0);
+            LCD_WriteStringAtPos("INITIALISATION     ", 0, 0);
             SSD_WriteDigitsGrouped(0x8888,0x01);
         {
             bool appInitialized = true;
@@ -281,8 +281,8 @@ void MAIN_Tasks ( void )
 
         case ATTENTE:
         {
-            LCD_WriteStringAtPos("ATTENTE         ", 0, 0);
-            LCD_WriteStringAtPos("C:Calib  L:Monit", 1, 0);
+            LCD_WriteStringAtPos("ATTENTE           ", 0, 0);
+            LCD_WriteStringAtPos("C:Calib  L:Monit  ", 1, 0);
             SSD_Close();
             if(machine.state != machine.previous_state);
             //LCD_WriteStringAtPos("ATTENTE         ", 0, 0);
@@ -303,7 +303,7 @@ void MAIN_Tasks ( void )
             CALIBRATION_Tasks();
             
             if(machine.state != machine.previous_state){//si on vient d'arriver dans l'état de calibration
-                LCD_WriteStringAtPos("CALIBRATION     ", 0, 0);
+                LCD_WriteStringAtPos("CALIBRATION         ", 0, 0);
                 calibration.state = ATTENTE_YEUX_OUVERTS;
             }
             if (calibration.state != HORS_CALIBRATION && ButtonCenterStateGet()) {//si on est en train de calibrer et qu'on pese sur BtnC
@@ -315,8 +315,8 @@ void MAIN_Tasks ( void )
             break;
 
         case MONITORING:
-           LCD_WriteStringAtPos("MONITORING      ", 0, 0);
-           LCD_WriteStringAtPos("C:Cal R:Attente ", 1, 0);
+           LCD_WriteStringAtPos("MONITORING           ", 0, 0);
+           LCD_WriteStringAtPos("C:Cal R:Attente      ", 1, 0);
            SSD_WriteDigits(timer%10,(timer / 10) % 10, (timer / 100) % 10, timer/1000,0,0,0,0);
             if (ButtonRightStateGet()){
             machine.state = ATTENTE;
@@ -327,8 +327,8 @@ void MAIN_Tasks ( void )
             break;
 
         case TEST:
-            LCD_WriteStringAtPos("TEST            ", 0, 0);
-            LCD_WriteStringAtPos("                ", 1, 0);
+            LCD_WriteStringAtPos("TEST               ", 0, 0);
+            LCD_WriteStringAtPos("                   ", 1, 0);
             break;
 
             /* The default state should never be executed. */
@@ -345,14 +345,14 @@ void CALIBRATION_Tasks(void){
      switch (calibration.state) {
         case HORS_CALIBRATION:
             SSD_Close();
-            LCD_WriteStringAtPos("HORS-CALIBRATION", 1, 0);
+            LCD_WriteStringAtPos("HORS-CALIBRATION  ", 1, 0);
             timer = 0;
             break;
 
         case ATTENTE_YEUX_OUVERTS:
             SSD_Close();
-            LCD_WriteStringAtPos("C_ATTENTE YEUX-O ", 0, 0);
-            LCD_WriteStringAtPos("U: Cal 1/2     ", 1, 0);
+            LCD_WriteStringAtPos("C_ATTENTE YEUX-O  ", 0, 0);
+            LCD_WriteStringAtPos("U: Cal 1/2        ", 1, 0);
             if (ButtonUpStateGet()) {
                 calibration.state = CALIBRATION_YEUX_OUVERTS;
                 timer = 0;
@@ -360,8 +360,8 @@ void CALIBRATION_Tasks(void){
             break;
 
         case CALIBRATION_YEUX_OUVERTS:
-            LCD_WriteStringAtPos("C_CAL YEUX-O   ", 0, 0);
-            LCD_WriteStringAtPos("Attend 1 sec... ", 1, 0);
+            LCD_WriteStringAtPos("C_CAL YEUX-O         ", 0, 0);
+            LCD_WriteStringAtPos("Attend 1 sec...      ", 1, 0);
             SSD_WriteDigits(timer%10,(timer / 10) % 10, (timer / 100) % 10, timer/1000,0,0,0,0);
             
             if (timer >= 1000) {
@@ -372,8 +372,8 @@ void CALIBRATION_Tasks(void){
             break;
 
         case ATTENTE_YEUX_FERMES:
-            LCD_WriteStringAtPos("ATTENTE YEUX-F  ", 0, 0);
-            LCD_WriteStringAtPos("U: Cal 2/2    ", 1, 0);
+            LCD_WriteStringAtPos("ATTENTE YEUX-F      ", 0, 0);
+            LCD_WriteStringAtPos("U: Cal 2/2          ", 1, 0);
             SSD_Close();
             if (ButtonUpStateGet()) {
                 calibration.state = CALIBRATION_YEUX_FERMES;
@@ -383,8 +383,8 @@ void CALIBRATION_Tasks(void){
             break;
 
         case CALIBRATION_YEUX_FERMES:
-            LCD_WriteStringAtPos("C_CALIB YEUX-F   ", 0, 0);
-            LCD_WriteStringAtPos("Attend 1 sec... ", 1, 0);
+            LCD_WriteStringAtPos("C_CALIB YEUX-F         ", 0, 0);
+            LCD_WriteStringAtPos("Attend 1 sec...        ", 1, 0);
             SSD_WriteDigits(timer%10,(timer / 10) % 10, (timer / 100) % 10, timer/1000,0,0,0,0);
             
             if (timer >= 1000) {
@@ -396,8 +396,8 @@ void CALIBRATION_Tasks(void){
         case CALCUL_NORMALISATION:
             SSD_Close();
             if (timer <= 1000) {
-            LCD_WriteStringAtPos("C_CALCUL          ", 0, 0);
-            LCD_WriteStringAtPos("En cours          ", 1, 0);
+            LCD_WriteStringAtPos("C_CALCUL            ", 0, 0);
+            LCD_WriteStringAtPos("En cours             ", 1, 0);
             }
             else{
                 if (baseline_power) {//si on as finis le calcul du baseline power (si le baseline power est non-nul)
@@ -405,8 +405,8 @@ void CALIBRATION_Tasks(void){
                     calibration.state = HORS_CALIBRATION;
                 }
                 else{
-                    LCD_WriteStringAtPos("C_NON VALIDE  ", 0, 0);
-                    LCD_WriteStringAtPos("C:Redo D:Bypass", 1, 0);
+                    LCD_WriteStringAtPos("C_NON VALIDE       ", 0, 0);
+                    LCD_WriteStringAtPos("C:Redo D:Bypass   ", 1, 0);
                     if(ButtonDownStateGet()){
                         baseline_power = 1;
                     }
