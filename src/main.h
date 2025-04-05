@@ -92,6 +92,7 @@ typedef enum
     CALIBRATION,
     MONITORING,
     TEST,
+    RETROACTION,
 } MAIN_STATES;
 
 typedef enum {
