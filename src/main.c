@@ -165,9 +165,6 @@ void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
     threshold = ADC1BUF1;
     feedBackTime = ADC1BUF2;
     
-    //(void) ADC1BUF0;
-    //(void) ADC1BUF1;
-    //(void) ADC1BUF2;
     IFS0bits.AD1IF = 0;
 }
 
@@ -217,6 +214,22 @@ void InitializeOC1()
     OC1CONbits.OCTSEL = 1; // Utiliser Timer3 comme base
     OC1CONbits.OCM = 0b110; // PWM mode without fault
     OC1CONbits.ON = 1; // Enable OC1
+}
+
+void InitializeOC5()
+{
+    OC5CON = 0;
+    OC5RS = 0;
+    OC5CONbits.OC32 = 0; // OC1RS est 16 bit
+    OC5CONbits.OCTSEL = 1; // Utiliser Timer3 comme base
+    OC5CONbits.OCM = 0b110; // PWM mode without fault
+    OC5CONbits.ON = 1; // Enable
+}
+
+void InitializeBargraph()
+{
+    TRISEbits.TRISE9 = 0; //BIN1
+    RPE9R = 0b1011 ; //OC5
 }
 
 volatile uint32_t dataIndex = 0;
@@ -337,8 +350,8 @@ void MAIN_Initialize ( void )
     InitializeSpeaker();
     InitializeOC1();
     InitializeADC();
-    
-   
+    InitializeBargraph();
+    InitializeOC5();
 }
 
 
@@ -430,6 +443,9 @@ void MAIN_Tasks ( void )
            LCD_WriteStringAtPos("MONITORING      ", 0, 0);
            LCD_WriteStringAtPos("C:Cal R:Attente ", 1, 0);
            SSD_WriteDigits(timer%10,(timer / 10) % 10, (timer / 100) % 10, timer/1000,0,0,0,0);
+           
+           OC5RS = map(niveauAttention, 0, 1023, 0, 1023); //Bargraph
+           
             if (ButtonRightStateGet()){
             machine.state = ATTENTE;
             }
