@@ -159,7 +159,7 @@ void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
 {
     (void) ADC1BUF0;
     (void) ADC1BUF1;
-    //(void) ADC1BUF2;
+    (void) ADC1BUF2;
     IFS0bits.AD1IF = 0;
 }
 
@@ -168,21 +168,25 @@ void InitializeADC()
     TRISBbits.TRISB2 = 1;
     ANSELBbits.ANSB2 = 1;
     
+    TRISBbits.TRISB3 = 1; //AIN1
+    ANSELBbits.ANSB3 = 1;
+    
+    TRISBbits.TRISB5 = 1; //BIN2
+    ANSELBbits.ANSB5 = 1;
+    
     AD1CON1 = 0;
     AD1CON1bits.SSRC = 0b010; // Timer 3 period match ends sampling and starts conversion
     AD1CON1bits.ASAM = 1;
     
     //AD1CHSbits.CH0SA = 0b00010; //AN2
     
-    AD1CON2bits.SMPI = 1;
+    AD1CON2bits.SMPI = 2;
     
-    TRISBbits.TRISB5 = 1;
-    ANSELBbits.ANSB5 = 1;
     
     AD1CON2bits.CSCNA = 1;
     AD1CSSLbits.CSSL2 = 1;
-    AD1CSSLbits.CSSL5 = 1;
-    //AD1CSSLbits.CSSL15 = 1;    
+    AD1CSSLbits.CSSL3 = 1;
+    AD1CSSLbits.CSSL5 = 1;    
     
     IFS0bits.AD1IF = 0;
     IPC5bits.AD1IP = 1;
