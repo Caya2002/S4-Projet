@@ -60,7 +60,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "UDP_app.h"
 #include "led.h"
 #include "ssd.h"
-#include "accel.h"
+//#include "accel.h"
 #include "lcd.h"
 #include "app_commands.h"
 
@@ -141,7 +141,7 @@ void Interupt_ACL_Init(void)
     INT4Rbits.INT4R = 12;    //assigner le Interupt au boutton C en mettant 4, quand ca va être ok mettre 12
 }
 
-static bool sw0_old; 
+static bool sw0_old;
 void ManageSwitches()
 {
     bool sw0_new = SWITCH0StateGet();
@@ -155,46 +155,146 @@ void ManageSwitches()
     sw0_old = sw0_new; 
 }
 
-void RGB_Task()
+void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
 {
-    //if(timer_1m) {               // Interruption à chaque 1 ms
-        //timer_1m = 0;            // Reset the compteur to capture the next event
-        //Toute pour la Moyenne fait directement dans la MX3 avec la fonction GestionMoyenne dans accel.c
-        Intense[0] = (MoyenneX*255)/2096;
-        Intense[1] = (MoyenneY*255)/2096;
-        Intense[2] = (MoyenneZ*255)/2096;
-
-        if(Intense[0] <= 0)
-        {
-            Intense[0] = Last_Intense[0];
-        }
-        else
-        {
-          Last_Intense[0] = Intense[0];  
-        }
-
-        if(Intense[1] <= 0)
-        {
-            Intense[1] = Last_Intense[1];
-        }
-        else
-        {
-          Last_Intense[0] = Intense[0];  
-        }
-
-        if(Intense[2] <= 0)
-        {
-            Intense[2] = Last_Intense[2];
-        }
-        else
-        {
-          Last_Intense[0] = Intense[0];  
-        }
-
-        RGBLED_SetValue(Intense[0], Intense[1], Intense[2]); 
-    //}
+    (void) ADC1BUF0;
+    (void) ADC1BUF1;
+    (void) ADC1BUF2;
+    IFS0bits.AD1IF = 0;
 }
 
+void InitializeADC()
+{
+    TRISBbits.TRISB2 = 1; //AIC
+    ANSELBbits.ANSB2 = 1;
+    
+    TRISBbits.TRISB3 = 1; //AIN1
+    ANSELBbits.ANSB3 = 1;
+    
+    TRISBbits.TRISB5 = 1; //BIN2
+    ANSELBbits.ANSB5 = 1;
+    
+    AD1CON1 = 0;
+    AD1CON1bits.SSRC = 0b010; // Timer 3 period match ends sampling and starts conversion
+    AD1CON1bits.ASAM = 1;
+    
+    //AD1CHSbits.CH0SA = 0b00010; //AN2
+    
+    AD1CON2bits.SMPI = 2;    
+    
+    AD1CON2bits.CSCNA = 1;
+    AD1CSSLbits.CSSL2 = 1;
+    AD1CSSLbits.CSSL3 = 1;
+    AD1CSSLbits.CSSL5 = 1;    
+    
+    IFS0bits.AD1IF = 0;
+    IPC5bits.AD1IP = 1;
+    IPC5bits.AD1IS = 0;
+    IEC0bits.AD1IE = 1;
+    AD1CON1bits.ON = 1;
+}
+
+void InitializeSpeaker()
+{
+    TRISBbits.TRISB14 = 0;
+    ANSELBbits.ANSB14 = 0;
+    RPB14R = 0x0C; // OC1
+}
+
+void InitializeOC1()
+{
+    OC1CON = 0;
+    OC1RS = 0;
+    OC1CONbits.OC32 = 0; // OC1RS est 16 bit
+    OC1CONbits.OCTSEL = 1; // Utiliser Timer3 comme base
+    OC1CONbits.OCM = 0b110; // PWM mode without fault
+    OC1CONbits.ON = 1; // Enable OC1
+}
+
+volatile uint32_t dataIndex = 0;
+volatile uint8_t counter_8kHz = 0;
+
+void __ISR(_TIMER_3_VECTOR, IPL3AUTO) Timer3_ISR(void)
+{    
+    counter_8kHz++;
+    
+    if(counter_8kHz >= 5) // Toutes les 6 interruptions
+    {
+        dataIndex++;
+        counter_8kHz = 0;  // R?initialisation
+    }
+    
+    IFS0bits.T3IF = 0;  //Clear flag
+}
+
+void InitializeTimer3()
+{
+    T3CONbits.ON = 0;
+    T3CONbits.TCKPS = 0b000; //Timer Input Clock Prescale = 1:1 pour 48kHz
+    T3CONbits.TCS = 0; //Timer Clock Source Select bit = Internal peripheral clock
+    T3CONbits.TGATE = 0; //Gated time accumulation is disabled
+    
+    PR3 = 1022; //Valeur à atteindre (48kHz)
+    TMR3 = 0; //Initialise compteur ? 0
+
+    IPC3bits.T3IP = 3; //Set interrupt priority to 6
+    IPC3bits.T3IS = 0; //Set interrupt sub-priority to 2
+    IFS0bits.T3IF = 0; //Clear interrupt flag
+    
+    IEC0bits.T3IE = 1; // Activer l'interruption Timer3 (48kHz)
+    T3CONbits.ON = 1;
+}
+
+#define SINUS_SIZE 20
+uint16_t compteurCycle = 0;
+uint16_t sinusTest[] = {512, 670, 812, 925, 998, 1023, 998, 925, 812,
+                670, 512, 353, 211, 98, 25, 0, 25, 98, 211, 353};
+
+int32_t map(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max) {
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+void retroaction()
+{
+    static uint8_t timeOut = 10; //Temps [s] avant de recommencer à MONITORER
+    static uint8_t done = 0;
+    if(done == 0)
+    {
+        if(compteurCycle < map(ADC1BUF0, 0, 1023, (400*1), (400*4)))
+        {
+            if(dataIndex < SINUS_SIZE)
+            {
+                OC1RS = sinusTest[dataIndex];
+            }
+            else
+            {
+                dataIndex = 0;
+                compteurCycle++;
+            }
+            LATAbits.LATA3 = 1;
+
+        }
+        else
+        {
+            done = 1;
+            LATAbits.LATA3 = 0;
+            dataIndex = 0;
+            OC1RS = 0;
+        }  
+    }
+    else if(done == 1) //Attendre 10 secondes apr?s fin du signal
+    {
+        LATAbits.LATA4 = 1;
+        if(dataIndex > (400*20*timeOut)) //400Cycles/s * 20 points/cycle * 10s
+        {
+            done = 0;
+            compteurCycle = 0;
+            dataIndex = 0;
+            machine.state = MONITORING;
+            LATAbits.LATA4 = 0;
+        }
+    }
+}
 
 // *****************************************************************************
 // *****************************************************************************
@@ -219,19 +319,16 @@ void MAIN_Initialize ( void )
     calibration.state = HORS_CALIBRATION;
     calibration.previous_state = HORS_CALIBRATION;
             
-
     machine.handleUSART0 = DRV_HANDLE_INVALID;
 
     UDP_Initialize(); // Initialisation de du serveur et client UDP
     LCD_Init(); // Initialisation de l'écran LCD
-    ACL_Init(); // Initialisation de l'accéléromètre
     SSD_Init(); // Initialisation du Timer4 et de l'accéléromètre
-    //Interupt_ACL_Init(); //Initialisation de l'interuption de l'accéléromètre
-    RGBLED_Init();
-    //Init_GestionDonnees();
-    //initialize_timer_interrupt();
-    //macro_enable_interrupts();
-
+    
+    InitializeTimer3();    
+    InitializeSpeaker();
+    InitializeOC1();
+    InitializeADC();
     
    
 }
@@ -271,7 +368,6 @@ void MAIN_Tasks ( void )
                 appInitialized &= (DRV_HANDLE_INVALID != machine.handleUSART0);
             }
 
-
             if (appInitialized)
             {
                 machine.state = ATTENTE;
@@ -293,6 +389,12 @@ void MAIN_Tasks ( void )
             }
             else if(ButtonLeftStateGet()){
                 machine.state = MONITORING;
+            }
+            else if (ButtonRightStateGet())
+            {
+                LCD_WriteStringAtPos("IL FAUT SE      ", 0, 0);
+                LCD_WriteStringAtPos("RECONCENTRER    ", 1, 0);                
+                machine.state = RETROACTION;
             }
            
             break;
@@ -325,7 +427,12 @@ void MAIN_Tasks ( void )
                 machine.state = CALIBRATION;
             }
             break;
-
+            
+        case RETROACTION:
+            
+            retroaction();
+            break;
+            
         case TEST:
             LCD_WriteStringAtPos("TEST            ", 0, 0);
             LCD_WriteStringAtPos("                ", 1, 0);
@@ -427,7 +534,6 @@ int main(void) {
     SYS_Initialize(NULL);
     MAIN_Initialize();
     SYS_INT_Enable();
-    
     
     while (1) {
         SYS_Tasks();

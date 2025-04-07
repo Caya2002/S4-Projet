@@ -363,8 +363,8 @@ build/default/debug/_ext/1360937237/main.o: ../src/main.c ../src/main.h \
  ../src/system_config/default/framework/osal/osal_impl_basic.h \
  ../src/system_config/default/framework/driver/spi/src/drv_spi_sys_queue.h \
  ../src/system_config/default/framework/driver/spi/src/drv_spi_variant_mapping.h \
- ../src/UDP_app.h ../src/led.h ../src/config.h ../src/ssd.h \
- ../src/accel.h ../src/lcd.h ../src/app_commands.h
+ ../src/UDP_app.h ../src/led.h ../src/config.h ../src/ssd.h ../src/lcd.h \
+ ../src/app_commands.h
 
 ../src/main.h:
 
@@ -1105,8 +1105,6 @@ build/default/debug/_ext/1360937237/main.o: ../src/main.c ../src/main.h \
 ../src/config.h:
 
 ../src/ssd.h:
-
-../src/accel.h:
 
 ../src/lcd.h:
 
