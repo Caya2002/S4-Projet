@@ -155,11 +155,19 @@ void ManageSwitches()
     sw0_old = sw0_new; 
 }
 
+volatile uint32_t signalInput = 0;
+volatile uint32_t threshold = 0;
+volatile uint32_t feedBackTime = 0;
+
 void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
 {
-    (void) ADC1BUF0;
-    (void) ADC1BUF1;
-    (void) ADC1BUF2;
+    signalInput = ADC1BUF0;
+    threshold = ADC1BUF1;
+    feedBackTime = ADC1BUF2;
+    
+    //(void) ADC1BUF0;
+    //(void) ADC1BUF1;
+    //(void) ADC1BUF2;
     IFS0bits.AD1IF = 0;
 }
 
@@ -260,7 +268,7 @@ void retroaction()
     static uint8_t done = 0;
     if(done == 0)
     {
-        if(compteurCycle < map(ADC1BUF0, 0, 1023, (400*1), (400*4)))
+        if(compteurCycle < map(feedBackTime, 0, 1023, (400*1), (400*4)))
         {
             if(dataIndex < SINUS_SIZE)
             {
@@ -348,6 +356,8 @@ void MAIN_Initialize ( void )
     See prototype in main.h.
  */
 
+uint32_t niveauAttention = 0x200; // valeur temporaire
+
 void MAIN_Tasks ( void )
 {
     /* Check the application's current state. */
@@ -390,12 +400,12 @@ void MAIN_Tasks ( void )
             else if(ButtonLeftStateGet()){
                 machine.state = MONITORING;
             }
-            else if (ButtonRightStateGet())
+            /*else if (ButtonRightStateGet())
             {
                 LCD_WriteStringAtPos("IL FAUT SE      ", 0, 0);
                 LCD_WriteStringAtPos("RECONCENTRER    ", 1, 0);                
                 machine.state = RETROACTION;
-            }
+            }*/
            
             break;
         }
@@ -425,6 +435,12 @@ void MAIN_Tasks ( void )
             }
             else if (ButtonCenterStateGet()){
                 machine.state = CALIBRATION;
+            }
+            else if(niveauAttention < threshold)
+            {
+                LCD_WriteStringAtPos("IL FAUT SE      ", 0, 0);
+                LCD_WriteStringAtPos("RECONCENTRER    ", 1, 0);                
+                machine.state = RETROACTION;                
             }
             break;
             

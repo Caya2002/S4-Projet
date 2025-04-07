@@ -5,6 +5,7 @@
         <group>
             <file>file:/C:/Users/antoi/S4-Projet/src/system_config/default/framework/driver/encx24j600/bus/spi/drv_encx24j600_spi_bus.c</file>
             <file>file:/C:/Users/antoi/S4-Projet/src/main.c</file>
+            <file>file:/C:/Users/antoi/S4-Projet/src/system_config/default/framework/driver/encx24j600/initialization_state/drv_encx24j600_detect_state.c</file>
             <file>file:/C:/Users/antoi/S4-Projet/src/lcd.c</file>
         </group>
     </open-files>
