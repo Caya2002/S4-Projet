@@ -157,7 +157,9 @@ void ManageSwitches()
 
 void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
 {
-    volatile uint32_t adcValue = ADC1BUF0; //Ne pas enlever cette ligne
+    (void) ADC1BUF0;
+    (void) ADC1BUF1;
+    //(void) ADC1BUF2;
     IFS0bits.AD1IF = 0;
 }
 
@@ -168,9 +170,19 @@ void InitializeADC()
     
     AD1CON1 = 0;
     AD1CON1bits.SSRC = 0b010; // Timer 3 period match ends sampling and starts conversion
-    AD1CON1bits.ASAM = 0;
+    AD1CON1bits.ASAM = 1;
     
-    AD1CHSbits.CH0SA = 0b00010; //AN2
+    //AD1CHSbits.CH0SA = 0b00010; //AN2
+    
+    AD1CON2bits.SMPI = 1;
+    
+    TRISBbits.TRISB5 = 1;
+    ANSELBbits.ANSB5 = 1;
+    
+    AD1CON2bits.CSCNA = 1;
+    AD1CSSLbits.CSSL2 = 1;
+    AD1CSSLbits.CSSL5 = 1;
+    //AD1CSSLbits.CSSL15 = 1;    
     
     IFS0bits.AD1IF = 0;
     IPC5bits.AD1IP = 1;
@@ -193,14 +205,14 @@ void InitializeOC1()
     OC1CONbits.OC32 = 0; // OC1RS est 16 bit
     OC1CONbits.OCTSEL = 1; // Utiliser Timer3 comme base
     OC1CONbits.OCM = 0b110; // PWM mode without fault
-    OC1CONbits.ON = 1; // Enable OC1    
+    OC1CONbits.ON = 1; // Enable OC1
 }
 
 volatile uint32_t dataIndex = 0;
 volatile uint8_t counter_8kHz = 0;
 
 void __ISR(_TIMER_3_VECTOR, IPL3AUTO) Timer3_ISR(void)
-{
+{    
     counter_8kHz++;
     
     if(counter_8kHz >= 5) // Toutes les 6 interruptions
@@ -209,7 +221,8 @@ void __ISR(_TIMER_3_VECTOR, IPL3AUTO) Timer3_ISR(void)
         counter_8kHz = 0;  // R?initialisation
     }
     
-    AD1CON1bits.SAMP = 1;  // Déclenche le début de l'échantillonnage de l'ADC    
+    //AD1CON1bits.SAMP = 0;  // Arrête l'échantillonnage et commence conversion
+    //AD1CON1bits.SAMP = 1;  // Déclenche le début de l'échantillonnage de l'ADC        
     IFS0bits.T3IF = 0;  //Clear flag
 }
 
