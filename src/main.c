@@ -165,7 +165,7 @@ void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
 
 void InitializeADC()
 {
-    TRISBbits.TRISB2 = 1;
+    TRISBbits.TRISB2 = 1; //AIC
     ANSELBbits.ANSB2 = 1;
     
     TRISBbits.TRISB3 = 1; //AIN1
@@ -180,8 +180,7 @@ void InitializeADC()
     
     //AD1CHSbits.CH0SA = 0b00010; //AN2
     
-    AD1CON2bits.SMPI = 2;
-    
+    AD1CON2bits.SMPI = 2;    
     
     AD1CON2bits.CSCNA = 1;
     AD1CSSLbits.CSSL2 = 1;
@@ -225,8 +224,6 @@ void __ISR(_TIMER_3_VECTOR, IPL3AUTO) Timer3_ISR(void)
         counter_8kHz = 0;  // R?initialisation
     }
     
-    //AD1CON1bits.SAMP = 0;  // Arrête l'échantillonnage et commence conversion
-    //AD1CON1bits.SAMP = 1;  // Déclenche le début de l'échantillonnage de l'ADC        
     IFS0bits.T3IF = 0;  //Clear flag
 }
 
