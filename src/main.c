@@ -204,11 +204,14 @@ void InitializeADC()
     TRISBbits.TRISB2 = 1; //AIC
     ANSELBbits.ANSB2 = 1;
     
-    TRISBbits.TRISB3 = 1; //AIN1
+    TRISBbits.TRISB3 = 1; //AIN1 //Potentiomètre
     ANSELBbits.ANSB3 = 1;
     
-    TRISBbits.TRISB5 = 1; //BIN2
+    TRISBbits.TRISB5 = 1; //BIN2 //Potentiomètre
     ANSELBbits.ANSB5 = 1;
+    
+    TRISBbits.TRISB6 = 1; // IR_RX // Signal input
+    ANSELBbits.ANSB6 = 1;
     
     AD1CON1 = 0;
     AD1CON1bits.SSRC = 0b010; // Timer 3 period match ends sampling and starts conversion
@@ -221,7 +224,8 @@ void InitializeADC()
     AD1CON2bits.CSCNA = 1;
     AD1CSSLbits.CSSL2 = 1;
     AD1CSSLbits.CSSL3 = 1;
-    AD1CSSLbits.CSSL5 = 1;    
+    AD1CSSLbits.CSSL5 = 1;
+    //AD1CSSLbits.CSSL6 = 1;
     
     IFS0bits.AD1IF = 0;
     IPC5bits.AD1IP = 1;

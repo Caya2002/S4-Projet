@@ -9,7 +9,7 @@ n = np.arange(0, N)
 t = n / fe #time vector
 
 #x: np.ndarray = 5*np.sin(2*np.pi*40*t) + 1*np.sin(2*np.pi*35*t) + 2*np.sin(2*np.pi*120*t)
-x: np.ndarray = 1*np.sin(2*np.pi*35*t)+1*np.sin(2*np.pi*40*t)+ 2*np.sin(2*np.pi*1000*t)
+x: np.ndarray = 128*np.sin(2*np.pi*35*t)
 
 X: np.ndarray = np.fft.fft(x)
 
@@ -23,7 +23,7 @@ fig, ax = plt.subplots()
 ax.set_xscale('log')  # Définit l'échelle logarithmique pour l'axe des x
 ax.stem(
     frequencies[:N//2],
-    20 * np.log10(np.abs(X_filtered[:N//2])), 
+    20 * np.log10((np.abs(X_filtered[:N//2])**2)+1),
     basefmt=" "  # Supprime la ligne horizontale de base
 )
 ax.set(
