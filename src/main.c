@@ -155,15 +155,46 @@ void ManageSwitches()
     sw0_old = sw0_new; 
 }
 
+
+//Moyenne mobile
+#define N 5
+
+typedef struct {
+    uint32_t buffer[N];
+    uint8_t index;
+    uint8_t count;
+    uint32_t sum;
+} Context;
+
+uint32_t moyenneMobile(Context *ctx, uint32_t new_sample) {
+    ctx->sum -= ctx->buffer[ctx->index];
+    ctx->buffer[ctx->index] = new_sample;
+    ctx->sum += new_sample;
+
+    ctx->index = (ctx->index + 1) % N;
+    if (ctx->count < N) ctx->count++;
+
+    return ctx->sum / ctx->count;
+}
+
+Context ctx_signalInput = {0};
+Context ctx_threshold = {0};
+Context ctx_feedBackTime = {0};
+
+
 volatile uint32_t signalInput = 0;
 volatile uint32_t threshold = 0;
 volatile uint32_t feedBackTime = 0;
 
 void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
 {
-    signalInput = ADC1BUF0;
-    threshold = ADC1BUF1;
-    feedBackTime = ADC1BUF2;
+    //signalInput = ADC1BUF0;
+    //threshold = ADC1BUF1;
+    //feedBackTime = ADC1BUF2;
+    
+    signalInput = moyenneMobile(&ctx_signalInput, ADC1BUF0);
+    threshold = moyenneMobile(&ctx_threshold, ADC1BUF1);
+    feedBackTime = moyenneMobile(&ctx_feedBackTime, ADC1BUF2);
     
     IFS0bits.AD1IF = 0;
 }
