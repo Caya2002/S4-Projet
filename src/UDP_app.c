@@ -221,15 +221,18 @@ void _UDP_ClientTasks() {
             }
             SYS_CONSOLE_PRINT("Avail %d\r\n", TCPIP_UDP_PutIsReady(appData.clientSocket));
             
-            uint16_t test_envoi_valeur = 0b0100001100111111;                    // Test : 67, 63 -> C?
-            UDP_Send_Buffer[0] = (test_envoi_valeur >> 8) & 0xFF;
-            UDP_Send_Buffer[1] = test_envoi_valeur & 0xFF;
+            //uint16_t test_envoi_valeur = 0b0100001100111111;                    // Test : 67, 63 -> C?
+            
+            
+            
+            //UDP_Send_Buffer[0] = (test_envoi_valeur >> 8) & 0xFF;
+            //UDP_Send_Buffer[1] = test_envoi_valeur & 0xFF;
             
             
             //strcpy(UDP_Send_Buffer, "Test communication en plusieurs mots et texte");
             
             //UDP_bytes_to_send = strlen(UDP_Send_Buffer);
-            UDP_bytes_to_send = 8;
+            UDP_bytes_to_send = 256;
             
             SYS_CONSOLE_PRINT("Client: Sending [%d, %d]", UDP_Send_Buffer[0], UDP_Send_Buffer[1]);
 

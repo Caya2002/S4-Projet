@@ -269,10 +269,13 @@ void InitializeBargraph()
 
 volatile uint32_t dataIndex = 0;
 volatile uint8_t counter_8kHz = 0;
+volatile uint8_t counter_640Hz = 0;
+volatile uint16_t sendBufferIndex = 0;
 
 void __ISR(_TIMER_3_VECTOR, IPL3AUTO) Timer3_ISR(void)
 {    
     counter_8kHz++;
+    counter_640Hz++;
     
     if(counter_8kHz >= 5) // Toutes les 6 interruptions
     {
@@ -280,6 +283,13 @@ void __ISR(_TIMER_3_VECTOR, IPL3AUTO) Timer3_ISR(void)
         counter_8kHz = 0;  // R?initialisation
     }
     
+    if(counter_640Hz >= 75)
+    {
+        UDP_Send_Buffer[sendBufferIndex] = (signalInput >> 8) & 0xFF;
+        UDP_Send_Buffer[sendBufferIndex + 1] = signalInput & 0xFF;
+        sendBufferIndex += 2;
+        counter_640Hz = 0;
+    }
     IFS0bits.T3IF = 0;  //Clear flag
 }
 
@@ -346,6 +356,7 @@ void retroaction()
             done = 0;
             compteurCycle = 0;
             dataIndex = 0;
+            sendBufferIndex = 0;
             machine.state = MONITORING;
             LATAbits.LATA4 = 0;
         }
@@ -446,6 +457,7 @@ void MAIN_Tasks ( void )
                 calibration.state = ATTENTE_YEUX_OUVERTS;
             }
             else if(ButtonLeftStateGet()){
+                sendBufferIndex = 0;
                 machine.state = MONITORING;
             }
             /*else if (ButtonRightStateGet())
@@ -480,8 +492,17 @@ void MAIN_Tasks ( void )
            uint32_t threshold_mapped = map(threshold, 20, 1005, 0, 100);
            SSD_WriteDigits(threshold_mapped%10,(threshold_mapped / 10) % 10, (threshold_mapped / 100) % 10, threshold_mapped/1000,0,0,0,0);
            
+           
+
+           if(sendBufferIndex >= 255)
+           {
+                UDP_Send_Packet = true;
+                sendBufferIndex = 0;
+           }
+           
+           
            OC5RS = map(niveauAttention, 0, 1023, 0, 680); //Bargraph
-           ManageSwitches();
+           //ManageSwitches();
            UDP_Tasks();
            
             if (ButtonRightStateGet()){
