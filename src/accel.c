@@ -199,25 +199,25 @@ void GestionDonnees()
     count_tableau = count_tableau + 4;
     
     //Send les valeur à chaque changement
-    count_send++;
-   
-    
-    if(count_tableau == 160)
-    {
-        Tram_Send[0] = count_send >> 24 & 0xFF;
-        Tram_Send[1] = count_send >> 16 & 0xFF;
-        Tram_Send[2] = count_send >> 8 & 0xFF;
-        Tram_Send[3] = count_send & 0xFF;
-
-        strcpy(UDP_Send_Buffer, Tram_Send);
-        strcpy(UDP_Send_Buffer+4, accel_tableau_X);
-        strcpy(UDP_Send_Buffer+164, accel_tableau_Y);
-        strcpy(UDP_Send_Buffer+324, accel_tableau_Z);
-         
-        UDP_Send_Packet = true;
-        
-        count_tableau = 0;
-    }
+//    count_send++;
+//   
+//    
+//    if(count_tableau == 160)
+//    {
+//        Tram_Send[0] = count_send >> 24 & 0xFF;
+//        Tram_Send[1] = count_send >> 16 & 0xFF;
+//        Tram_Send[2] = count_send >> 8 & 0xFF;
+//        Tram_Send[3] = count_send & 0xFF;
+//
+//        strcpy(UDP_Send_Buffer, Tram_Send);
+//        strcpy(UDP_Send_Buffer+4, accel_tableau_X);
+//        strcpy(UDP_Send_Buffer+164, accel_tableau_Y);
+//        strcpy(UDP_Send_Buffer+324, accel_tableau_Z);
+//         
+//        UDP_Send_Packet = true;
+//        
+//        count_tableau = 0;
+//    }
     
 }
 

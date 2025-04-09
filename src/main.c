@@ -481,6 +481,8 @@ void MAIN_Tasks ( void )
            SSD_WriteDigits(threshold_mapped%10,(threshold_mapped / 10) % 10, (threshold_mapped / 100) % 10, threshold_mapped/1000,0,0,0,0);
            
            OC5RS = map(niveauAttention, 0, 1023, 0, 680); //Bargraph
+           ManageSwitches();
+           UDP_Tasks();
            
             if (ButtonRightStateGet()){
             machine.state = ATTENTE;

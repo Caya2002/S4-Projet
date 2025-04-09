@@ -67,8 +67,8 @@ extern "C" {
 bool UDP_Commands_Init();
 extern char UDP_Hostname_Buffer[MAX_URL_SIZE];
 extern char UDP_Port_Buffer[6];
-extern char UDP_Send_Buffer[MAX_PACKET_SIZE+1];
-extern char UDP_Receive_Buffer[MAX_PACKET_SIZE+1];
+extern uint8_t UDP_Send_Buffer[MAX_PACKET_SIZE+1];                 //uint8_t
+extern uint8_t UDP_Receive_Buffer[MAX_PACKET_SIZE+1];              //uint8_t
 extern uint8_t UDP_Server_Receive_Buffer[MAX_PACKET_SIZE+1];
 extern bool UDP_Send_Packet;
 extern bool UDP_Receive_Packet;

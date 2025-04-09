@@ -220,8 +220,19 @@ void _UDP_ClientTasks() {
                 break;
             }
             SYS_CONSOLE_PRINT("Avail %d\r\n", TCPIP_UDP_PutIsReady(appData.clientSocket));
-            UDP_bytes_to_send = strlen(UDP_Send_Buffer);
-            SYS_CONSOLE_PRINT("Client: Sending %s", UDP_Send_Buffer);
+            
+            uint16_t test_envoi_valeur = 0b0100001100111111;                    // Test : 67, 63 -> C?
+            UDP_Send_Buffer[0] = (test_envoi_valeur >> 8) & 0xFF;
+            UDP_Send_Buffer[1] = test_envoi_valeur & 0xFF;
+            
+            
+            //strcpy(UDP_Send_Buffer, "Test communication en plusieurs mots et texte");
+            
+            //UDP_bytes_to_send = strlen(UDP_Send_Buffer);
+            UDP_bytes_to_send = 8;
+            
+            SYS_CONSOLE_PRINT("Client: Sending [%d, %d]", UDP_Send_Buffer[0], UDP_Send_Buffer[1]);
+
             TCPIP_UDP_ArrayPut(appData.clientSocket, (uint8_t*)UDP_Send_Buffer, UDP_bytes_to_send);
             
            // Envoie les données (flush = envoie obligatoire des données dans la pile, peu importe la quantité de données)
@@ -246,7 +257,7 @@ void _UDP_ClientTasks() {
                 appData.clientState = UDP_TCPIP_WAITING_FOR_COMMAND;
                 break;
             }
-            uint16_t UDP_bytes_received = TCPIP_UDP_GetIsReady(appData.clientSocket);
+            uint32_t UDP_bytes_received = TCPIP_UDP_GetIsReady(appData.clientSocket);
             if (UDP_bytes_received) {
                 TCPIP_UDP_ArrayGet(appData.clientSocket, (uint8_t*)UDP_Receive_Buffer, sizeof(UDP_Receive_Buffer)-1);
                 /*
@@ -258,7 +269,7 @@ void _UDP_ClientTasks() {
                     UDP_bytes_received = sizeof(UDP_Receive_Buffer)-1;
                 }
                 UDP_Receive_Buffer[UDP_bytes_received] = '\0';    //append a null to display strings properly
-                SYS_CONSOLE_PRINT("\r\nClient: Client received %s\r\n", UDP_Receive_Buffer);
+                SYS_CONSOLE_PRINT("\r\nClient: Client received [%d, %d, %d, %d]\r\n", UDP_Receive_Buffer[0], UDP_Receive_Buffer[1], UDP_Receive_Buffer[2], UDP_Receive_Buffer[3]);
                 
                 // Pas de fermeture du socket on veux une connection continue
                 appData.clientState = UDP_TCPIP_WAITING_FOR_COMMAND;
