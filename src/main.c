@@ -193,8 +193,8 @@ void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
     //feedBackTime = ADC1BUF2;
     
     signalInput = moyenneMobile(&ctx_signalInput, ADC1BUF0);
-    threshold = moyenneMobile(&ctx_threshold, ADC1BUF1);
-    feedBackTime = moyenneMobile(&ctx_feedBackTime, ADC1BUF2);
+    feedBackTime = moyenneMobile(&ctx_threshold, ADC1BUF1);
+    threshold = moyenneMobile(&ctx_feedBackTime, ADC1BUF2);
     
     IFS0bits.AD1IF = 0;
 }
@@ -219,7 +219,7 @@ void InitializeADC()
     
     //AD1CHSbits.CH0SA = 0b00010; //AN2
     
-    AD1CON2bits.SMPI = 2;    
+    AD1CON2bits.SMPI = 2;
     
     AD1CON2bits.CSCNA = 1;
     AD1CSSLbits.CSSL2 = 1;
@@ -404,7 +404,7 @@ void MAIN_Initialize ( void )
     See prototype in main.h.
  */
 
-uint32_t niveauAttention = 0x200; // valeur temporaire
+uint32_t niveauAttention = 1023; // valeur temporaire
 
 void MAIN_Tasks ( void )
 {
@@ -477,9 +477,10 @@ void MAIN_Tasks ( void )
         case MONITORING:
            LCD_WriteStringAtPos("MONITORING      ", 0, 0);
            LCD_WriteStringAtPos("C:Cal R:Attente ", 1, 0);
-           SSD_WriteDigits(timer%10,(timer / 10) % 10, (timer / 100) % 10, timer/1000,0,0,0,0);
+           uint32_t threshold_mapped = map(threshold, 20, 1005, 0, 100);
+           SSD_WriteDigits(threshold_mapped%10,(threshold_mapped / 10) % 10, (threshold_mapped / 100) % 10, threshold_mapped/1000,0,0,0,0);
            
-           OC5RS = map(niveauAttention, 0, 1023, 0, 1023); //Bargraph
+           OC5RS = map(niveauAttention, 0, 1023, 0, 680); //Bargraph
            
             if (ButtonRightStateGet()){
             machine.state = ATTENTE;
