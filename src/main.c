@@ -192,9 +192,9 @@ void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
     //threshold = ADC1BUF1;
     //feedBackTime = ADC1BUF2;
     
-    signalInput = moyenneMobile(&ctx_signalInput, ADC1BUF0);
-    feedBackTime = moyenneMobile(&ctx_threshold, ADC1BUF1);
-    threshold = moyenneMobile(&ctx_feedBackTime, ADC1BUF2);
+    signalInput = moyenneMobile(&ctx_signalInput, ADC1BUF2);
+    feedBackTime = moyenneMobile(&ctx_threshold, ADC1BUF0);
+    threshold = moyenneMobile(&ctx_feedBackTime, ADC1BUF1);
     
     IFS0bits.AD1IF = 0;
 }
@@ -222,10 +222,10 @@ void InitializeADC()
     AD1CON2bits.SMPI = 2;
     
     AD1CON2bits.CSCNA = 1;
-    AD1CSSLbits.CSSL2 = 1;
+    //AD1CSSLbits.CSSL2 = 1;
     AD1CSSLbits.CSSL3 = 1;
     AD1CSSLbits.CSSL5 = 1;
-    //AD1CSSLbits.CSSL6 = 1;
+    AD1CSSLbits.CSSL6 = 1;
     
     IFS0bits.AD1IF = 0;
     IPC5bits.AD1IP = 1;

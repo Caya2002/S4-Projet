@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 N = 128 #number of samples
-fe = 256 #sampling frequency
+fe = 640 #sampling frequency
 df = fe/N
 f = 35
 
@@ -15,8 +15,8 @@ scale = 1/32
 #x = 10*np.sin(2*np.pi*f*t)
 #x = (128*np.sin(2*np.pi*scale*f*t)); #partie reelle  = sin(), partie imag = 0 (<<16)
 #x = (128*np.sin(2*np.pi*scale*f*t)).astype(np.int16) #partie reelle  = sin(), partie imag = 0 (<<16)
-#x = (10*np.sin(2*np.pi*f*t)).astype(np.int16)
-x = ((10*np.sin(2*np.pi*f*t) + 10*np.sin(2*np.pi*100*t))).astype(np.int16)
+x = (1*np.sin(2*np.pi*f*t)).astype(np.int16)
+#x = ((10*np.sin(2*np.pi*f*t) + 10*np.sin(2*np.pi*100*t))).astype(np.int16)
 
 plt.figure()
 plt.plot(t, x)
