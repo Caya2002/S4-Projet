@@ -56,10 +56,11 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "UDP_app.h"
 
 #include "tcpip/tcpip.h"
-
+#include <math.h>
 #include "app_commands.h"
 #define SERVER_PORT 8080
 int8_t _UDP_PumpDNS(const char * hostname, IPV4_ADDR *ipv4Addr);
+extern uint32_t niveauAttention;
 // *****************************************************************************
 // *****************************************************************************
 // Section: Global Data Definitions
@@ -273,6 +274,9 @@ void _UDP_ClientTasks() {
                 }
                 UDP_Receive_Buffer[UDP_bytes_received] = '\0';    //append a null to display strings properly
                 SYS_CONSOLE_PRINT("\r\nClient: Client received [%d, %d, %d, %d]\r\n", UDP_Receive_Buffer[0], UDP_Receive_Buffer[1], UDP_Receive_Buffer[2], UDP_Receive_Buffer[3]);
+                
+                niveauAttention = (UDP_Receive_Buffer[0] << 24) + (UDP_Receive_Buffer[1] << 16) + (UDP_Receive_Buffer[2] << 8) + UDP_Receive_Buffer[3];
+                SYS_CONSOLE_PRINT("\r\nNiveau attention : %d\r\n", niveauAttention);
                 
                 // Pas de fermeture du socket on veux une connection continue
                 appData.clientState = UDP_TCPIP_WAITING_FOR_COMMAND;

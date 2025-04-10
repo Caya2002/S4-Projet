@@ -192,9 +192,9 @@ void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
     //threshold = ADC1BUF1;
     //feedBackTime = ADC1BUF2;
     
-    signalInput = moyenneMobile(&ctx_signalInput, ADC1BUF0);
-    feedBackTime = moyenneMobile(&ctx_threshold, ADC1BUF1);
-    threshold = moyenneMobile(&ctx_feedBackTime, ADC1BUF2);
+    signalInput = moyenneMobile(&ctx_signalInput, ADC1BUF2);
+    feedBackTime = moyenneMobile(&ctx_threshold, ADC1BUF0);
+    threshold = moyenneMobile(&ctx_feedBackTime, ADC1BUF1);
     
     IFS0bits.AD1IF = 0;
 }
@@ -204,13 +204,13 @@ void InitializeADC()
     TRISBbits.TRISB2 = 1; //AIC
     ANSELBbits.ANSB2 = 1;
     
-    TRISBbits.TRISB3 = 1; //AIN1 //Potentiomètre
+    TRISBbits.TRISB3 = 1; //AIN1 //Potentiomètre // Jaune // feedBackTime
     ANSELBbits.ANSB3 = 1;
     
-    TRISBbits.TRISB5 = 1; //BIN2 //Potentiomètre
+    TRISBbits.TRISB5 = 1; //BIN2 //Potentiomètre // Mauve // Threshold
     ANSELBbits.ANSB5 = 1;
     
-    TRISBbits.TRISB6 = 1; // IR_RX // Signal input
+    TRISBbits.TRISB6 = 1; // IR_RX // Signal input //
     ANSELBbits.ANSB6 = 1;
     
     AD1CON1 = 0;
@@ -222,10 +222,10 @@ void InitializeADC()
     AD1CON2bits.SMPI = 2;
     
     AD1CON2bits.CSCNA = 1;
-    AD1CSSLbits.CSSL2 = 1;
+    //AD1CSSLbits.CSSL2 = 1;
     AD1CSSLbits.CSSL3 = 1;
     AD1CSSLbits.CSSL5 = 1;
-    //AD1CSSLbits.CSSL6 = 1;
+    AD1CSSLbits.CSSL6 = 1;
     
     IFS0bits.AD1IF = 0;
     IPC5bits.AD1IP = 1;
@@ -263,7 +263,7 @@ void InitializeOC5()
 
 void InitializeBargraph()
 {
-    TRISEbits.TRISE9 = 0; //BIN1
+    TRISEbits.TRISE9 = 0; //BIN1 // Fil vert du module
     RPE9R = 0b1011 ; //OC5
 }
 
@@ -280,10 +280,10 @@ void __ISR(_TIMER_3_VECTOR, IPL3AUTO) Timer3_ISR(void)
     if(counter_8kHz >= 5) // Toutes les 6 interruptions
     {
         dataIndex++;
-        counter_8kHz = 0;  // R?initialisation
+        counter_8kHz = 0;  // Réinitialisation
     }
     
-    if(counter_640Hz >= 75)
+    if(counter_640Hz >= 75)            // Devrait être 75
     {
         UDP_Send_Buffer[sendBufferIndex] = (signalInput >> 8) & 0xFF;
         UDP_Send_Buffer[sendBufferIndex + 1] = signalInput & 0xFF;
@@ -415,8 +415,8 @@ void MAIN_Initialize ( void )
     See prototype in main.h.
  */
 
-uint32_t niveauAttention = 1023; // valeur temporaire
-
+uint32_t niveauAttention = 0;
+uint32_t niveauAttention_mapped = 0;
 void MAIN_Tasks ( void )
 {
     /* Check the application's current state. */
@@ -489,8 +489,8 @@ void MAIN_Tasks ( void )
         case MONITORING:
            LCD_WriteStringAtPos("MONITORING      ", 0, 0);
            LCD_WriteStringAtPos("C:Cal R:Attente ", 1, 0);
-           uint32_t threshold_mapped = map(threshold, 20, 1005, 0, 100);
-           SSD_WriteDigits(threshold_mapped%10,(threshold_mapped / 10) % 10, (threshold_mapped / 100) % 10, threshold_mapped/1000,0,0,0,0);
+           //uint32_t threshold_mapped = map(threshold, 10, 1007, 0, 100);
+           SSD_WriteDigits(threshold%10,(threshold / 10) % 10, (threshold / 100) % 10, threshold/1000,0,0,0,0);
            
            
 
@@ -500,9 +500,9 @@ void MAIN_Tasks ( void )
                 sendBufferIndex = 0;
            }
            
-           
-           OC5RS = map(niveauAttention, 0, 1023, 0, 680); //Bargraph
-           //ManageSwitches();
+           //niveauAttention_mapped = map(23625000, 0, 47250000, 0, 1023);
+           OC5RS = map(niveauAttention_mapped, 0, 1023, 0, 680); //Bargraph
+           //OC5RS = 200;
            UDP_Tasks();
            
             if (ButtonRightStateGet()){
@@ -511,12 +511,12 @@ void MAIN_Tasks ( void )
             else if (ButtonCenterStateGet()){
                 machine.state = CALIBRATION;
             }
-            else if(niveauAttention < threshold)
+            /*else if(niveauAttention_mapped < threshold)
             {
                 LCD_WriteStringAtPos("IL FAUT SE      ", 0, 0);
                 LCD_WriteStringAtPos("RECONCENTRER    ", 1, 0);                
                 machine.state = RETROACTION;                
-            }
+            }*/
             break;
             
         case RETROACTION:
