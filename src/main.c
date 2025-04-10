@@ -188,13 +188,13 @@ volatile uint32_t feedBackTime = 0;
 
 void __ISR(_ADC_VECTOR, IPL1AUTO) ADC_ISR(void)
 {
-    //signalInput = ADC1BUF0;
-    //threshold = ADC1BUF1;
-    //feedBackTime = ADC1BUF2;
+    signalInput = ADC1BUF2;
+    feedBackTime = ADC1BUF0;
+    threshold = ADC1BUF1;
     
-    signalInput = moyenneMobile(&ctx_signalInput, ADC1BUF2);
-    feedBackTime = moyenneMobile(&ctx_threshold, ADC1BUF0);
-    threshold = moyenneMobile(&ctx_feedBackTime, ADC1BUF1);
+    //signalInput = moyenneMobile(&ctx_signalInput, ADC1BUF2);
+    //feedBackTime = moyenneMobile(&ctx_threshold, ADC1BUF0);
+    //threshold = moyenneMobile(&ctx_feedBackTime, ADC1BUF1);
     
     IFS0bits.AD1IF = 0;
 }
@@ -283,7 +283,7 @@ void __ISR(_TIMER_3_VECTOR, IPL3AUTO) Timer3_ISR(void)
         counter_8kHz = 0;  // Réinitialisation
     }
     
-    if(counter_640Hz >= 75)            // Devrait être 75
+    if((counter_640Hz >= 75) && (machine.state == MONITORING))            // Devrait être 75
     {
         UDP_Send_Buffer[sendBufferIndex] = (signalInput >> 8) & 0xFF;
         UDP_Send_Buffer[sendBufferIndex + 1] = signalInput & 0xFF;
