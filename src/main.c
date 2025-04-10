@@ -316,7 +316,7 @@ uint16_t compteurCycle = 0;
 uint16_t sinusTest[] = {512, 670, 812, 925, 998, 1023, 998, 925, 812,
                 670, 512, 353, 211, 98, 25, 0, 25, 98, 211, 353};
 
-int32_t map(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max) {
+int64_t map(int64_t x, int64_t in_min, int64_t in_max, int64_t out_min, int64_t out_max) {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
@@ -326,7 +326,7 @@ void retroaction()
     static uint8_t done = 0;
     if(done == 0)
     {
-        if(compteurCycle < map(feedBackTime, 0, 1023, (400*1), (400*4)))
+        if(compteurCycle < map(feedBackTime, 0, 1023, (400*1), (400*5)))
         {
             if(dataIndex < SINUS_SIZE)
             {
@@ -415,8 +415,8 @@ void MAIN_Initialize ( void )
     See prototype in main.h.
  */
 
-uint32_t niveauAttention = 0;
-uint32_t niveauAttention_mapped = 0;
+uint64_t niveauAttention = 0;
+uint64_t niveauAttention_mapped = 0;
 void MAIN_Tasks ( void )
 {
     /* Check the application's current state. */
@@ -489,7 +489,7 @@ void MAIN_Tasks ( void )
         case MONITORING:
            LCD_WriteStringAtPos("MONITORING      ", 0, 0);
            LCD_WriteStringAtPos("C:Cal R:Attente ", 1, 0);
-           //uint32_t threshold_mapped = map(threshold, 10, 1007, 0, 100);
+           uint32_t threshold_mapped = map(threshold, 10, 1007, 0, 1023);
            SSD_WriteDigits(threshold%10,(threshold / 10) % 10, (threshold / 100) % 10, threshold/1000,0,0,0,0);
            
            
@@ -500,8 +500,8 @@ void MAIN_Tasks ( void )
                 sendBufferIndex = 0;
            }
            
-           //niveauAttention_mapped = map(23625000, 0, 47250000, 0, 1023);
-           OC5RS = map(niveauAttention_mapped, 0, 1023, 0, 680); //Bargraph
+           niveauAttention_mapped = map(niveauAttention, 10000, 3000000, 0, 1023);
+           OC5RS = map(niveauAttention_mapped, 0, 1023, 0, 1023); //Bargraph
            //OC5RS = 200;
            UDP_Tasks();
            
@@ -511,12 +511,18 @@ void MAIN_Tasks ( void )
             else if (ButtonCenterStateGet()){
                 machine.state = CALIBRATION;
             }
-            /*else if(niveauAttention_mapped < threshold)
+            else if(niveauAttention_mapped < threshold)
             {
                 LCD_WriteStringAtPos("IL FAUT SE      ", 0, 0);
                 LCD_WriteStringAtPos("RECONCENTRER    ", 1, 0);                
                 machine.state = RETROACTION;                
-            }*/
+            }
+            else if(ButtonDownStateGet())
+            {
+                LCD_WriteStringAtPos("IL FAUT SE      ", 0, 0);
+                LCD_WriteStringAtPos("RECONCENTRER    ", 1, 0);                
+                machine.state = RETROACTION;                
+            }
             break;
             
         case RETROACTION:
